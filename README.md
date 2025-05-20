@@ -18,7 +18,7 @@ A simple Flask web app that converts Shopify product data (`.json` or public URL
 ## 🧪 Demo
 
 ```bash
-git clone https://github.com/yourusername/shopify-to-wordpress-csv.git
-cd shopify-to-wordpress-csv
+git clone https://github.com/arifmanzoor11/Shopify2WP
+cd Shopify2WP
 pip install -r requirements.txt
 python app.py
