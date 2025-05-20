@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Shopify to WordPress CSV Converter{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="doc-container">
+      <h1 class="text-center">📄 Shopify to WordPress CSV Converter</h1>
+      <p>This tool allows you to export product data from a Shopify store and convert it into a CSV file that is compatible with WordPress (WooCommerce).</p>
+
+      <h2>🔧 How It Works</h2>
+      <ol>
+        <li>
+          <strong>Upload JSON</strong><br>
+          Export your Shopify products as a <code>.json</code> file or use the public Shopify API endpoint:<br>
+          Example: <code>https://yourshop.myshopify.com/products.json</code>
+        </li>
+        <li>
+          <strong>Conversion</strong><br>
+          The app processes each product and:
+          <ul>
+            <li>Detects if it's <strong>simple</strong> or <strong>variable</strong></li>
+            <li>Creates a parent row (Type = <code>variable</code>) for products with multiple options</li>
+            <li>Generates variation rows (Type = <code>variation</code>) linked to the parent by SKU</li>
+            <li>Formats weights, prices, stock status, tags, categories, etc.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Download CSV</strong><br>
+          A WooCommerce-compatible CSV is downloaded, ready to be imported using:
+          <br><code>WooCommerce → Products → Import</code>
+        </li>
+      </ol>
+
+      <h2>💡 Input Options</h2>
+      <ul>
+        <li><strong>Option 1:</strong> Upload a <code>.json</code> file containing Shopify product data</li>
+        <li><strong>Option 2:</strong> Paste a public Shopify URL that ends in <code>/products.json</code></li>
+      </ul>
+
+      <h2>🧠 Notes</h2>
+      <ul>
+        <li>The app automatically renames the <code>Colour</code> attribute to <code>Color</code></li>
+        <li>Missing SKU values are auto-generated using the product name</li>
+        <li>All prices, images, and weights are preserved</li>
+        <li>Only fields required by WooCommerce are included</li>
+      </ul>
+
+      <h2>🚀 Getting Started</h2>
+      <ol>
+        <li>Clone or download the project from GitHub (or your server)</li>
+        <li>Install dependencies:<br><code>pip install flask pandas requests</code></li>
+        <li>Run the app:<br><code>python app.py</code></li>
+        <li>Visit:<br><code>http://localhost:5000/</code></li>
+      </ol>
+
+      <h2>🔗 Links</h2>
+      <ul>
+        <li><a href="/">← Back to Converter</a></li>
+        <li><a href="https://woocommerce.com/products/product-csv-import-suite/">WooCommerce CSV Docs</a></li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

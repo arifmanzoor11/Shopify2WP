@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Shopify to WordPress CSV Converter{% endblock %}
+
+{% block content %}
+<div class="converter-box card mx-auto" style="max-width: 600px;">
+  <div class="card-body">
+    <h2 class="card-title text-center mb-4">Shopify to WordPress CSV Converter</h2>
+
+    {% if error %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" id="converterForm" target="downloadFrame" onsubmit="showSpinner()">
+      <div class="mb-3">
+        <label for="json_file" class="form-label">Upload Shopify JSON File</label>
+        <input type="file" name="json_file" id="json_file" accept=".json" class="form-control">
+      </div>
+
+      <div class="mb-3">
+        <label for="shopify_url" class="form-label">Or Enter Shopify Store URL</label>
+        <input type="text" name="shopify_url" id="shopify_url" class="form-control" placeholder="https://example.myshopify.com">
+      </div>
+
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Convert to CSV</button>
+      </div>
+    </form>
+    <iframe name="downloadFrame" style="display:none;"></iframe>
+  </div>
+</div>
+
+<div class="loading-spinner" id="loadingSpinner">
+  <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;"></div>
+</div>
+
+<script>
+  function showSpinner() {
+    document.getElementById("loadingSpinner").style.display = "flex";
+    setTimeout(() => {
+      document.getElementById("loadingSpinner").style.display = "none";
+    }, 8000); // hide after 8 sec as fallback
+  }
+</script>
+{% endblock %}
