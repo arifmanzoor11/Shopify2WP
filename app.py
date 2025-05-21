@@ -36,12 +36,12 @@ def validate_url(url):
 
 def get_image(product, variant=None):
     if variant and variant.get("featured_image") and variant["featured_image"].get("src"):
-        return variant["featured_image"]["src"]
-    return product.get("images", [{}])[0].get("src", "")
+        return [variant["featured_image"]["src"]]
+    return [img.get("src", "") for img in product.get("images", []) if img.get("src")]
 
 def get_option_values(product, variants):
     options = {}
-    for i in range(3):  # Shopify supports up to 3
+    for i in range(3):
         if i < len(product.get("options", [])):
             name = product["options"][i].get("name", "").replace("Colour", "Color")
             values = {v.get(f"option{i+1}") for v in variants if v.get(f"option{i+1}") and v.get(f"option{i+1}") != "Default Title"}
@@ -75,10 +75,11 @@ def build_row(base=None, overrides=None):
 
 def create_parent_row(product, options, sku):
     title = product.get("title", "")
-    images = ", ".join([get_image(product, v) for v in product.get("variants", []) if get_image(product, v)])
+    generated_sku = secure_filename(title.lower().replace(" ", "-"))
+    images = ", ".join([img.get("src", "") for img in product.get("images", []) if img.get("src")])
     return build_row({
         "Type": "variable",
-        "SKU": sku,
+        "SKU": generated_sku,
         "Name": title,
         "Published": 1 if product.get("published_at") else 0,
         "Description": product.get("body_html", ""),
@@ -99,9 +100,10 @@ def create_parent_row(product, options, sku):
 def create_variation_row(product, variant, options, index, parent_sku):
     title = product.get("title", "")
     option_parts = [variant.get(f"option{i+1}") for i in range(3) if variant.get(f"option{i+1}") and variant.get(f"option{i+1}") != "Default Title"]
+    images = get_image(product, variant)[0] if get_image(product, variant) else ""
     return build_row({
         "Type": "variation",
-        "SKU": variant.get("sku") or f"{parent_sku}-{index}",
+        "SKU": f"{parent_sku}-{index}",
         "Name": f"{title} - {', '.join(option_parts)}",
         "Published": 1 if product.get("published_at") else 0,
         "Sale price": str(variant.get("price", "")),
@@ -109,7 +111,7 @@ def create_variation_row(product, variant, options, index, parent_sku):
         "In stock?": 1 if variant.get("available", True) else 0,
         "Stock": str(variant.get("inventory_quantity", "")),
         "Weight (lbs)": round(variant.get("grams", 0) / GRAMS_TO_POUNDS, 2) if variant.get("grams") else "",
-        "Images": get_image(product, variant),
+        "Images": images,
         "Parent": parent_sku,
         "Position": index,
         "Attribute 1 name": list(options)[0] if options else "",
@@ -122,7 +124,8 @@ def create_variation_row(product, variant, options, index, parent_sku):
 
 def create_simple_row(product, variant):
     title = product.get("title", "")
-    sku = variant.get("sku", f"{secure_filename(title.lower().replace(' ', '-'))}-simple")
+    sku = secure_filename(title.lower().replace(" ", "-")) + "-simple"
+    images = ", ".join([img.get("src", "") for img in product.get("images", []) if img.get("src")])
     return build_row({
         "Type": "simple",
         "SKU": sku,
@@ -131,7 +134,7 @@ def create_simple_row(product, variant):
         "Description": product.get("body_html", ""),
         "Categories": product.get("product_type", ""),
         "Tags": ", ".join(product.get("tags", [])),
-        "Images": get_image(product, variant),
+        "Images": images,
         "Sale price": str(variant.get("price", "")),
         "Regular price": str(variant.get("compare_at_price") or variant.get("price", "")),
         "In stock?": 1 if variant.get("available", True) else 0,
@@ -149,10 +152,7 @@ def convert_to_wordpress_csv(products):
         variants = product.get("variants", [])
         options = get_option_values(product, variants)
         title = product.get("title", "")
-        slug = secure_filename(title.lower().replace(" ", "-"))
-        parent_sku = product.get("variants", [{}])[0].get("sku")
-        if not parent_sku:
-            parent_sku = f"{slug}"
+        parent_sku = secure_filename(title.lower().replace(" ", "-"))
 
         if len(variants) > 1 and options:
             rows.append(create_parent_row(product, options, parent_sku))
@@ -175,15 +175,24 @@ def index():
     if request.method == "POST":
         try:
             json_data = None
+            download_filename = "wordpress_import.csv"  # Default name
+
             if "json_file" in request.files and request.files["json_file"].filename:
                 uploaded_file = request.files["json_file"]
                 if not allowed_file(uploaded_file.filename):
                     return render_template("index.html", error="Invalid file type. Upload a JSON file.")
+                # Set download filename based on uploaded file name
+                base_filename = secure_filename(uploaded_file.filename).rsplit(".", 1)[0]
+                download_filename = f"{base_filename}_wordpress_import.csv"
                 json_data = json.load(uploaded_file)
             elif request.form.get("shopify_url"):
                 url = validate_url(request.form.get("shopify_url"))
                 if not url:
                     return render_template("index.html", error="Invalid Shopify URL.")
+                # Set download filename based on Shopify URL domain
+                parsed_url = urlparse(url)
+                domain = parsed_url.netloc.replace("www.", "").replace(".com", "").replace(".myshopify", "")
+                download_filename = f"{domain}_wordpress_import.csv"
                 response = requests.get(url, timeout=10)
                 response.raise_for_status()
                 json_data = response.json()
@@ -195,7 +204,7 @@ def index():
                 return render_template("index.html", error="No products found.")
 
             csv_file = convert_to_wordpress_csv(products)
-            return send_file(csv_file, mimetype="text/csv", as_attachment=True, download_name="wordpress_import.csv")
+            return send_file(csv_file, mimetype="text/csv", as_attachment=True, download_name=download_filename)
 
         except Exception as e:
             logger.error(f"Error: {e}")
@@ -207,10 +216,9 @@ def index():
 def documentation():
     return render_template("documentation.html")
 
-# Register error handlers
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template("404.html"), 404
 
 if __name__ == "__main__":
-      app.run(debug=True, port=3004)
+    app.run(debug=True, port=3004)
