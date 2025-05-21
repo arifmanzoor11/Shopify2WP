@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, send_file
+from flask import Flask, request, render_template, make_response
 import pandas as pd
 import requests
 import os
@@ -204,7 +204,10 @@ def index():
                 return render_template("index.html", error="No products found.")
 
             csv_file = convert_to_wordpress_csv(products)
-            return send_file(csv_file, mimetype="text/csv", as_attachment=True, download_name=download_filename)
+            response = make_response(csv_file.getvalue())
+            response.headers["Content-Disposition"] = f"attachment; filename={download_filename}"
+            response.headers["Content-Type"] = "text/csv; charset=utf-8-sig"
+            return response
 
         except Exception as e:
             logger.error(f"Error: {e}")
