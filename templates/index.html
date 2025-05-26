@@ -3,46 +3,50 @@
 {% block title %}Shopify to WordPress CSV Converter{% endblock %}
 
 {% block content %}
-<div class="converter-box card mx-auto" style="max-width: 600px;">
-  <div class="card-body">
-    <h2 class="card-title text-center mb-4">Shopify to WordPress CSV Converter</h2>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h1 class="h3 text-center mb-4 text-dark">CSV Converter</h1>
+          <p class="text-muted text-center mb-4">Convert Shopify data to WordPress format</p>
+          
+          {% if error %}
+          <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          {% endif %}
 
-    {% if error %}
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ error }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-      </div>
-    {% endif %}
+          <form method="POST" enctype="multipart/form-data" id="converterForm" target="downloadFrame" onsubmit="showSpinner()">
+            <div class="mb-4">
+              <label for="json_file" class="form-label fw-medium">Upload JSON File</label>
+              <input type="file" name="json_file" id="json_file" accept=".json" class="form-control form-control-lg">
+            </div>
 
-    <form method="POST" enctype="multipart/form-data" id="converterForm" target="downloadFrame" onsubmit="showSpinner()">
-      <div class="mb-3">
-        <label for="json_file" class="form-label">Upload Shopify JSON File</label>
-        <input type="file" name="json_file" id="json_file" accept=".json" class="form-control">
-      </div>
+            <div class="text-center mb-3">
+              <span class="text-muted">or</span>
+            </div>
 
-      <div class="mb-3">
-        <label for="shopify_url" class="form-label">Or Enter Shopify Store URL</label>
-        <input type="text" name="shopify_url" id="shopify_url" class="form-control" placeholder="https://example.myshopify.com">
-      </div>
+            <div class="mb-4">
+              <label for="shopify_url" class="form-label fw-medium">Shopify Store URL</label>
+              <input type="text" name="shopify_url" id="shopify_url" class="form-control form-control-lg" placeholder="https://example.myshopify.com">
+            </div>
 
-      <div class="d-grid">
-        <button type="submit" class="btn btn-primary">Convert to CSV</button>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Convert to CSV</button>
+          </form>
+
+          <iframe name="downloadFrame" style="display:none;"></iframe>
+        </div>
       </div>
-    </form>
-    <iframe name="downloadFrame" style="display:none;"></iframe>
+    </div>
   </div>
 </div>
 
-<div class="loading-spinner" id="loadingSpinner">
-  <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;"></div>
-</div>
-
-<script>
-  function showSpinner() {
-    document.getElementById("loadingSpinner").style.display = "flex";
-    setTimeout(() => {
-      document.getElementById("loadingSpinner").style.display = "none";
-    }, 8000); // hide after 8 sec as fallback
-  }
-</script>
+<!-- <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50" id="loadingSpinner" style="display:none!important; z-index: 9999;">
+  <div class="text-center text-white">
+    <div class="spinner-border mb-3" style="width: 3rem; height: 3rem;"></div>
+    <p>Converting your file...</p>
+  </div>
+</div> -->
 {% endblock %}
